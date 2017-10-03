@@ -50,11 +50,16 @@ def delete_task():
 	return redirect("/")
 	
 # adding user registration and login
-@app.route("/login")
+@app.route("/login", methods=['POST','GET'])
 def login():
+	if request.method == 'POST':
+		email = request.form['email']
+		password = request.form['password']
+		user = User.query.filter_by(email=email).first()
+	
 	return render_template("login.html")
 	
-@app.route("/register")
+@app.route("/register", methods=['POST','GET'])
 def register():
 	return render_template("register.html")
 
