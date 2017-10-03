@@ -5,6 +5,7 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://get-it-done:password@localhost:3306/get-it-done'
 app.config['SQLALCHEMY_ECHO'] = True
+app.secret_key = "a bloody asshole"
 
 db = SQLAlchemy(app)
 
@@ -25,6 +26,12 @@ class User(db.Model):
 	def __init__(self, email, password):
 		self.email = email
 		self.password = password
+
+@app.before_request
+def require_login():
+	allowed_routes = ['login', 'register']
+	if request.endpoint not in allowed_routes and 'email' not in session:
+		return redirect("/login")
 
 @app.route("/", methods=['POST', 'GET'])
 def index():
@@ -56,12 +63,42 @@ def login():
 		email = request.form['email']
 		password = request.form['password']
 		user = User.query.filter_by(email=email).first()
+		if user and user.password == password:
+			return redirect("/")
+			session['email'] = email
+		else:
+			# TODO display appropriate error message
+			return "<h1>Error...</h1>"
 	
 	return render_template("login.html")
 	
 @app.route("/register", methods=['POST','GET'])
 def register():
+	if request.method == 'POST':
+		email = request.form['email']
+		password = request.form['password']
+		verify = request.form['verify']
+		
+	# TODO validate input
+	
+	existing_user = User.query.filter_by(email=email).first()
+	if not existing_user:
+		new_user = User(email, password)
+		db.session.add(new_user)
+		db.session.commit()
+		
+		session['email'] = email
+		
+		return redirect("/")
+		
+	else:
+		return "Error: Duplicate User"
+	
 	return render_template("register.html")
-
+	
+@app.route("/logout"):
+def logout():
+	del session['email']
+	
 if __name__ == "__main__":
 	app.run()
