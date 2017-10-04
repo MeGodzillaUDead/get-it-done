@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -64,8 +64,8 @@ def login():
 		password = request.form['password']
 		user = User.query.filter_by(email=email).first()
 		if user and user.password == password:
-			return redirect("/")
 			session['email'] = email
+			return redirect("/")
 		else:
 			# TODO display appropriate error message
 			return "<h1>Error...</h1>"
@@ -96,9 +96,10 @@ def register():
 	
 	return render_template("register.html")
 	
-@app.route("/logout"):
+@app.route("/logout")
 def logout():
 	del session['email']
+	return "<h1>Logged Out</h1>"
 	
 if __name__ == "__main__":
 	app.run()
